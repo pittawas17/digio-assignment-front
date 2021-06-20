@@ -15,6 +15,8 @@ class Home extends React.Component {
         };
     }
 
+    componentDidMount() {}
+
     checkHorizontal(array) {
         for (let i = 0; i < this.state.tableSize; i++) {
             let winArray = [];
@@ -134,25 +136,7 @@ class Home extends React.Component {
                 </Head>
 
                 <main style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
-                    <div style={{ marginBottom: "20px", fontSize: "20px", display: "flex", justifyContent: "center", width: "100%", backgroundColor: "#b4ecb4", paddingTop: "1rem" }}>
-                        <label>Table size: </label>
-                        <input
-                            type="number"
-                            name="tableSize"
-                            value={this.state.tableSize}
-                            onChange={(e) => {
-                                e.target.value > 3 ? this.setState({ tableSize: e.target.value }) : this.setState({ tableSize: 3 });
-                            }}
-                            min="3"
-                            style={{ margin: "0 10px 10px 10px", width: "50px" }}
-                        />
-                        <span>
-                            x {this.state.tableSize}
-                            {this.state.tableSize === 3 && <span> (Minimum value)</span>}
-                        </span>
-                    </div>
-
-                    <div style={{ display: "flex", paddingLeft: "1rem", paddingRight: "1rem", paddingBottom: "1rem", flexWrap: "wrap", justifyContent: "center" }}>
+                    <div style={{ display: "flex", padding: "1rem", flexWrap: "wrap", justifyContent: "center" }}>
                         <div className={styles.table} style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", position: "relative" }}>
                             {this.state.winner && (
                                 <div
@@ -177,6 +161,24 @@ class Home extends React.Component {
                                 </div>
                             )}
                             {tableArray}
+                            <div style={{ marginBottom: "20px", fontSize: "20px", display: "flex", justifyContent: "center", width: "100%", backgroundColor: "#b4ecb4", paddingTop: "1rem" }}>
+                                <label>Table size: </label>
+                                <input
+                                    type="number"
+                                    name="tableSize"
+                                    value={this.state.tableSize}
+                                    onChange={(e) => {
+                                        this.setState({ player1: [], player2: [] });
+                                        e.target.value > 3 ? this.setState({ tableSize: e.target.value }) : this.setState({ tableSize: 3 });
+                                    }}
+                                    min="3"
+                                    style={{ margin: "0 10px 10px 10px", width: "50px" }}
+                                />
+                                <span>
+                                    x {this.state.tableSize}
+                                    {this.state.tableSize === 3 && <span> (Minimum value)</span>}
+                                </span>
+                            </div>
                         </div>
 
                         <div className={styles.replay} style={{ backgroundColor: "red", width: "520px", height: "100%", padding: "10px 50px" }}>
