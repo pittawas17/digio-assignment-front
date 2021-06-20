@@ -2,20 +2,37 @@ import Head from "next/head";
 import styles from "../styles/Home.module.css";
 import Image from "next/image";
 import React from "react";
+import axios from "axios";
+import Moment from "react-moment";
+import "moment-timezone";
 
 class Home extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            sortFormLast: true,
+            history: null,
             tableSize: 3,
             player1: [],
             player2: [],
             isP1Turn: true,
             winner: null,
+            replay: false,
         };
     }
 
-    componentDidMount() {}
+    componentDidMount() {
+        axios.get(`http://localhost:3003/match`).then((res) => {
+            let history = res.data;
+            history.sort((a, b) => {
+                let da = new Date(a.dateTime),
+                    db = new Date(b.dateTime);
+                return da - db;
+            });
+            history.reverse();
+            this.setState({ history });
+        });
+    }
 
     checkHorizontal(array) {
         for (let i = 0; i < this.state.tableSize; i++) {
@@ -63,9 +80,58 @@ class Home extends React.Component {
         return false;
     }
 
-    checkResult(player, array) {
-        if (this.checkHorizontal(array) || this.checkVertical(array) || this.checkDiagonal(array)) this.setState({ winner: player });
-        else console.log("No Winner!");
+    async checkResult(player, array) {
+        let { history, player1, player2 } = this.state;
+
+        // count round
+        let round = 0;
+        if (player === "Player 1") {
+            round = player2.length + array.length;
+        } else if (player === "Player 2") {
+            round = player1.length + array.length;
+        }
+
+        if (this.checkHorizontal(array) || this.checkVertical(array) || this.checkDiagonal(array)) {
+            this.setState({ winner: player });
+            let matchData = {
+                player1: this.state.player1,
+                player2: this.state.player2,
+                winner: player,
+                tableSize: this.state.tableSize,
+            };
+            await axios.post(`http://localhost:3003/match`, matchData).then((res) => {
+                history.push(res.data);
+                history.sort((a, b) => {
+                    let da = new Date(a.dateTime),
+                        db = new Date(b.dateTime);
+                    return da - db;
+                });
+                if (this.state.sortFormLast) {
+                    history.reverse();
+                }
+                this.setState({ history });
+            });
+        } else if (round === this.state.tableSize * this.state.tableSize) {
+            this.setState({ winner: "Draw" });
+            let matchData = {
+                player1: this.state.player1,
+                player2: this.state.player2,
+                winner: "Draw",
+                tableSize: this.state.tableSize,
+            };
+            await axios.post(`http://localhost:3003/match`, matchData).then((res) => {
+                history.push(res.data);
+                history.sort((a, b) => {
+                    let da = new Date(a.dateTime),
+                        db = new Date(b.dateTime);
+                    return da - db;
+                });
+                if (this.state.sortFormLast) {
+                    history.reverse();
+                }
+                this.setState({ history });
+            });
+        }
     }
 
     selectPosition(i) {
@@ -153,8 +219,12 @@ class Home extends React.Component {
                                         zIndex: 2,
                                     }}
                                 >
-                                    <p style={{ color: "white", fontSize: "5em" }}>{this.state.winner} win!!!</p>
-                                    <div onClick={() => this.restart()} class="btn btn-primary btn-lg" style={{ fontSize: "2em" }}>
+                                    {this.state.winner !== "Draw" ? (
+                                        <p style={{ color: "white", fontSize: "5em" }}>{this.state.winner} win!!!</p>
+                                    ) : (
+                                        <p style={{ color: "white", fontSize: "5em" }}>Draw!!!</p>
+                                    )}
+                                    <div onClick={() => this.restart()} className="btn btn-primary btn-lg" style={{ fontSize: "2em" }}>
                                         <Image src="/restart.png" width="19em" height="19em" />
                                         &nbsp;&nbsp;Restart
                                     </div>
@@ -181,8 +251,26 @@ class Home extends React.Component {
                             </div>
                         </div>
 
-                        <div className={styles.replay} style={{ backgroundColor: "red", width: "520px", height: "100%", padding: "10px 50px" }}>
+                        <div className={styles.replay} style={{ backgroundColor: "red", width: "520px", height: "100%", padding: "10px 50px", overflow: "scroll", maxHeight: "90vh" }}>
                             <p style={{ fontSize: "2rem", textAlign: "center", borderBottom: "3px solid black" }}>History</p>
+                            {this.state.history &&
+                                this.state.history.map((match) => {
+                                    return (
+                                        <div key={match._id}>
+                                            <div>
+                                                <span>Match on: </span>
+                                                <span>
+                                                    <Moment format="DD/MM/YYYY HH:mm">{match.dateTime}</Moment>
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <span>Winner: </span>
+                                                <span>{match.winner}</span>
+                                            </div>
+                                            <hr />
+                                        </div>
+                                    );
+                                })}
                         </div>
                         {/* <div>
                             <p>xx zjaklsdjaksjdklasjdklasjdkladlkajdslkasdklfjasldkfjk;asdjflajsdlkfjaskldfjklasjdflkasjldkfjaskldjflkasjdfkl</p>
